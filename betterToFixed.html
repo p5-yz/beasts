@@ -1,0 +1,157 @@
+<script src="../tinytest.js"></script>
+<script>
+
+/**
+ * Description: 
+ * The betterToFixed should NOT use multiplication or 
+ * exponential notation. Instead, you will actually move the decimal point
+ * using string manipulation.
+ *
+ * So in the example above, instead of using 1.005e2, you'll need
+ * to figure out a way to work with the string "1.005" and then
+ * create a new string with the decimal point moved over two places
+ * to the right. 
+ * In other words, you need to turn "1.005" into "100.5" using string manipulation.
+ *
+ * Include tests that cover the weird cases we saw in the video
+ * like 0.615, 10.235, and 1.005.
+**/
+
+function betterToFixed(value, precision) {
+    var regex = /(\d{0,}\.{0,1}\d{1,})(e|e\+|e\-)(\d{1,})/
+    
+    var zeroPadding = "";
+    var exponentialNotation = false;
+    var noPadding = false;
+    var sign = "";
+
+    // value must be a number in all cases. Use call method to return class [object String].
+    // See https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/toString
+
+    if (this.toString.call(value) === "[object String]"){
+        throw new TypeError("value must be a number")
+    }   
+    if (value < 0){
+        value = Math.abs(value);
+        sign = "-"
+    }
+
+    value = value + "";
+
+    // Remove fractional part of precision if it exists
+    // or converts an object or property (NaN, undefined, etc) to zero.
+    precision = precision >> 0;
+
+    if (precision < 0 || precision > 100) {
+        throw new RangeError('precision must be greater than 0 or less than 100 ');
+    }
+
+    if (value.match(regex)){
+        if (value.match(/e\-/)){
+            var exponent = value.split('e-');
+        }
+        if (value.match(/e\+/)){
+            exponentialNotation = true;
+            var exponent = value.split('e+');
+        }
+
+
+        // If the absolute value is greater or equal to 1e+21,
+        // call Number.prototype.toString() and return a string in 
+        // exponential notation.
+        if (( Number(exponent[0]) > 0 ) && 
+            (Number(exponent[1]) > 20 ) && 
+                exponentialNotation ){
+            return sign + value.toString();
+        }
+        if ( (Number(exponent[0] ) === 0 ) ){
+            return sign + exponent[0];
+        } else {
+            var mantissa = exponent[0].split(".");   
+            for (var i = 0; i < exponent[1] - mantissa[0].length; i++ ){
+                zeroPadding = zeroPadding + "0";
+            }
+            value = "0".concat(".".concat(zeroPadding
+                                    .concat(mantissa[0]
+                                    .concat(mantissa[1]))));
+        }
+    }
+
+    var floatingPoint = value.split('.');
+    var decimalPoint = ".";
+    var integer = floatingPoint[0];
+    var fractional = floatingPoint[1];
+
+    if (typeof integer === `undefined`){
+        integer = "0";
+    }
+    if (typeof fractional === `undefined`){
+        fractional = "0";
+    }
+    
+    // If the precision exceeds the value.length pad value with zeros.
+    if (precision > fractional.length ){
+        for (var i = 0; i < precision - 1 /*- fractional.length */; i++){
+            fractional = fractional + "0";
+        }
+    }
+    var toFixed =  Math.round(   integer + fractional.slice(0, precision)
+                +"." + fractional.slice(precision, fractional.length )   ) + "";
+          
+    if (precision === 0) return sign + toFixed;           
+
+    
+    if ( Number(fractional) !== 0) {
+        if (Number(integer) !== 0) {
+                 return sign + toFixed.slice(0, toFixed.length - precision) + decimalPoint + ""
+             + toFixed.slice(toFixed.length - precision, toFixed.length ) 
+        }  else {
+            return sign + (integer + decimalPoint + (zeroPadding + toFixed).slice(0, precision));
+        }  
+    } else {
+        return sign + integer + "." + fractional;
+                
+    }  
+    // Note: answer seems correct but one is a string and
+    // the other is not. Why?
+    //
+    // betterToFixed(-123.99963e-3,3)
+    // "-0.124"
+    //
+    // -123.99963e-3.toFixed(3)
+    // -0.124
+}
+
+tests({
+    'It should return a string': function () {
+    var result = betterToFixed(1, 1);
+    eq(typeof result, 'string');
+  },
+  'It should always round 5 up': function () {
+    eq(betterToFixed(0.615, 2), '0.62');
+    eq(betterToFixed(10.235, 2), '10.24');
+    eq(betterToFixed(1.005, 2), '1.01');
+  },
+  'It should work with negative numbers': function () {
+    eq(betterToFixed(-0.13, 1), '-0.1');
+  },
+  'It should work if the length of the base increases due to rounding': function () {
+    eq(betterToFixed(9.99, 1), '10.0');
+  },
+  'It should work if the precision exceeds the given input': function () {
+    eq(betterToFixed(9.9, 2), '9.90');
+  },
+  'Should default to precision 0': function () {
+    eq(betterToFixed(1.12), '1');
+  },
+  'It should display a string in standard exponential notation if the absolute value is greater than or equal to 1e+21.':function(){
+      eq(betterToFixed(1e21), '1e+21');
+      eq(betterToFixed(1e22), '1e+22');
+      eq(betterToFixed(1e23), '1e+23');
+      eq(betterToFixed(1e24), '1e+24');
+      eq(betterToFixed(1e25), '1e+25');
+      eq(betterToFixed(1.23e25), '1.23e+25');
+      eq(betterToFixed(12.23e25), '1.223e+26');
+  }
+})
+</script>

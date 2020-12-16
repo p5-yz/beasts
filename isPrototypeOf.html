@@ -1,0 +1,174 @@
+<script src="../tinytest.js"></script>
+<script>
+
+/*
+   
+    seeYetAgain.__proto__ === see
+    true
+
+    seeYetAgain.__proto__.__proto__ === see
+    false
+
+/////////////////////////////////////////////////////////////////////
+
+    function object1() {}
+    function object2() {}
+
+    object1.prototype = Object.create(object2.prototype);
+
+    const object3 = new object1();
+
+    console.log(isPrototypeOf(object1.prototype, object3));
+    // expected output: true
+
+    console.log(isPrototypeOf(object2.prototype, object3));
+
+////////////////////////////////////////////////////////////////////
+
+    function Foo() {}
+    function Bar() {}
+    function Baz() {}
+
+    Bar.prototype = Object.create(Foo.prototype);
+    Baz.prototype = Object.create(Bar.prototype);
+
+    var baz = new Baz();
+
+    console.log(isPrototypeOf(Baz.prototype, baz)); // true
+    console.log(isPrototypeOf(Bar.prototype, baz)); // true
+    console.log(isPrototypeOf(Foo.prototype, baz)); // true
+    console.log(isPrototypeOf(Object.prototype, baz)); // true
+
+///////////////////////////////////////////////////////////////////
+
+    var canine = {
+    bark: function() {
+        console.log('bark');
+    }
+    };
+
+    var dog = Object.create(canine);
+    dog.fetch = function() {
+    console.log('fetch');
+    };
+
+    var myDog = Object.create(dog);
+    var empty = Object.create(null);
+
+    // These two lines are equivalent.
+    dog.isPrototypeOf(myDog);  // native function returns true
+    console.log(isPrototypeOf(dog, myDog)); // your function does the same
+
+    // These two lines, similarly should return the same thing.
+    dog.isPrototypeOf(empty);  // native function returns false
+    console.log(isPrototypeOf(dog, empty)); // your function does the same
+
+    // This should work too.
+    Object.prototype.isPrototypeOf(myDog);  // native function returns true
+    console.log(isPrototypeOf(Object.prototype, myDog)); // your function does the same
+
+    // Also make sure that your function will work for any number of prototype links.
+    console.log(isPrototypeOf(canine, myDog)); // true
+
+////////////////////////////////////////////////////////////////////////////
+//
+// Note: initial attempt using .__proto__
+//
+////////////////////////////////////////////////////////////////////////////
+
+function isPrototypeOf(object, prototypeObj){
+    // Return false if you have reached the end of the prototype chain or if object  
+    // doesn't exist on the prototype chain.
+    if (prototypeObj === null || ( !Boolean(prototypeObj.__proto__ ))){
+        return false;
+    }
+
+    if (prototypeObj !== object){
+         return isPrototypeOf(object, prototypeObj.__proto__);
+
+    } else {
+         return true;  
+    }       
+}
+
+
+*/
+var canine = {
+    bark: function () {
+        console.log('bark');
+    }
+};
+
+var dog = Object.create(canine);
+
+dog.fetch = function () {
+    console.log('fetch');
+}
+
+var myDog = Object.create(dog);
+var empty = Object.create(null);
+
+function isPrototypeOf(prototypeObj, object){
+    if ( Object.is(prototypeObj, undefined) ||  Object.is(prototypeObj, null) ) {
+        throw new TypeError ('prototypeObj cannot be null of undefined');
+    } 
+
+    // Edge cases for primitive data types and function types.  
+    if ((typeof object !== 'object') && ( typeof object !== 'function')){
+        return false;
+    }
+    
+    // We must return false if you have reached the end of the prototype chain or if object  
+    // doesn't exist on the prototype chain.
+    if (object === null /*|| ( !Boolean(Object.getPrototypeOf( prototypeObj) ))*/  ){
+        return false;
+    }
+    
+    if (prototypeObj !== object){
+         return isPrototypeOf(prototypeObj, Object.getPrototypeOf( object) );
+    } else {
+         return true;  
+    }       
+}
+                                  
+tests({
+    'It should return true if prototypeObj is in the prototype chain of object parameter.': function () {
+      eq(isPrototypeOf(dog, myDog), true);
+    },
+    'It should return false if prototypeObj is not in the prototype chain of object parameter.': function () {
+      eq(isPrototypeOf(dog, empty), false);
+    },
+    'It should have valid prototype chain.': function () {
+      eq(isPrototypeOf(Object.prototype, myDog), true);
+    },
+    'It should work for any number of prototype links.': function () {
+      eq(isPrototypeOf(canine, myDog), true);
+    },
+    'It should throw a TypeError if prototypeObj is undefined or null.': function () {
+      var isTypeError = false;
+
+      try {
+        isPrototypeOf(null, empty);
+      } catch(e) {
+        isTypeError = (e instanceof TypeError);
+      }
+      eq(isTypeError, true);
+    },
+    'It should return false when checking prototype for null or undefined.': function () {
+      eq(isPrototypeOf(canine, null), false);
+      eq(isPrototypeOf(canine, undefined), false);
+    },
+    'It should return false if types are not objects.': function () {
+      eq(isPrototypeOf(String.prototype, ''), false);
+      eq(isPrototypeOf(Boolean.prototype, true), false);
+      eq(isPrototypeOf(Number.prototype, 1), false);
+      eq(isPrototypeOf(Symbol.prototype, Symbol()), false);
+    },
+    'It should return true if types are objects.': function () {
+      eq(isPrototypeOf(Object.prototype, {}), true);
+      eq(isPrototypeOf(Array.prototype, []), true);
+      eq(isPrototypeOf(Function.prototype, function () {}), true);
+    }
+  });
+
+</script>
