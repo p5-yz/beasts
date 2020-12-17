@@ -1,6 +1,6 @@
-# beasts
+# Beasts
 
-## Files in Glitch:
+## The files are also hosted in Glitch:
 [betterToFixed.htm](https://glitch.com/edit/#!/abounding-abrupt-flood?path=index.html%3A1%3A0)
 
  [isProtoType.html](https://glitch.com/edit/#!/awake-pyrite-quesadilla?path=index.html%3A1%3A0)
