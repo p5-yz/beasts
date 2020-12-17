@@ -1,0 +1,98 @@
+<script src="tinytest.js"></script>
+<script>
+
+(function(){
+  var libraryStorage = {};
+
+  function librarySystem (libraryName, dependencies, library) {
+    var libraries = [];
+
+    if (arguments.length > 1){ 
+
+      // Store dependencies in object.
+      libraryStorage[libraryName] = {
+        libraryDependencies:dependencies,
+        runlibraries:library,
+        libraryHasBeenCalled: false,
+        cachedLibrary:[],          // Cache library.
+
+        
+        // TODO: Test for cached dependencies. Write code!!
+        cacheDependencies:[]
+      } 
+    } else {
+     if (typeof libraryStorage[libraryName] !== 'undefined'){
+
+        // If library has been called previously use cached library.
+        if  (libraryStorage[libraryName].libraryHasBeenCalled){
+            return libraryStorage[libraryName].cachedLibrary;
+        } 
+
+        // If the libraryHasBeenCalled flag is set to `true` this indicates that the library
+        // has been called before and we should use the cached library as 
+        // opposed to the callback used previously.
+        libraryStorage[libraryName].libraryHasBeenCalled = true;
+          
+        // If the length of dependencies is zero return the library.
+        if (libraryStorage[libraryName].libraryDependencies.length === 0){
+          return  libraryStorage[libraryName].cachedLibrary = libraryStorage[libraryName].runlibraries.call(this);
+        } else {  
+          for (var i = 0; i < libraryStorage[libraryName].libraryDependencies.length; i++){
+
+            // Store the libraries in an array to display once all dependencies are resolved. 
+            var aDependency = libraryStorage[libraryName].libraryDependencies[i];
+            libraries[i] = libraryStorage[aDependency].runlibraries();
+          }
+        }
+
+        // If any dependency is undefined or unavailable exit silently 
+        for (var i = 0; i < libraries.length; i++){
+          if (libraries[i] === undefined){
+            return undefined;
+          }
+        }
+        return libraryStorage[libraryName].runlibraries.apply(this, libraries);
+      }
+    } 
+  }
+  window.librarySystem = librarySystem;
+})();
+
+                                  
+tests({
+  'it should take a library name and a function that returns the library as arguments and store them': function() {
+    librarySystem('app', [], function() {
+      return 'app';
+    });
+    eq(librarySystem('app'), 'app');
+  },
+  'it should handle a library with dependencies when added in order': function() {
+    librarySystem('dependency', [], function() {
+      return 'loaded dependency';
+    });
+    librarySystem('app', ['dependency'], function(dependency) {
+      return 'app with ' + dependency;
+    });
+    eq(librarySystem('app'), 'app with loaded dependency');
+  },
+  'it should handle a library with 0 dependencies': function() {
+    librarySystem('name', [], function() {
+      return 'Richard';
+    });
+    eq(librarySystem('name'), 'Richard');
+  },
+  'it should handle a library with multiple dependencies': function() {
+    librarySystem('name', [], function() {
+      return 'Gordon';
+    });
+    librarySystem('company', [], function() {
+      return 'Watch and Code';
+    });
+    librarySystem('workBlurb', ['name', 'company'], function(name, company) {
+      return name + ' works at ' + company;
+    });
+    eq(librarySystem('workBlurb'), 'Gordon works at Watch and Code');
+  }
+});
+
+</script>
